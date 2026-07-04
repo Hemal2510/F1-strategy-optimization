@@ -9,9 +9,6 @@ from agents.dqn.action_mask import get_action_mask
 
 
 def set_global_seed(seed: int) -> None:
-    """
-    Set seeds for reproducibility.
-    """
 
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -25,9 +22,7 @@ def train_dqn(
     seed: int = 42,
     checkpoint_dir: str = "checkpoints/dqn/checkpoints_v1",
 ):
-    """
-    Main DQN training loop for F1StrategyEnv.
-    """
+
 
     set_global_seed(seed)
 

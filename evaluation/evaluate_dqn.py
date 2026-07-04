@@ -5,14 +5,13 @@ from agents.dqn.dqn_agent import DQNAgent, DQNConfig
 from agents.dqn.action_mask import get_action_mask
 
 def evaluate_checkpoint(
-        checkpoint_path: str = "checkpoints/dqn/checkpoints_v1/latest.pt",
+        checkpoint_path: str = "checkpoints/dqn/checkpoints_v1/final.pt",
         episodes: int = 20,
-        seed: int = 10_000,
+        seed: int = 10000,
 ):
     env = F1StrategyEnv()
 
     agent = DQNAgent(DQNConfig(obs_dim=15, action_dim=6, seed = seed,))
-
     agent.load(checkpoint_path)
     agent.online_net.eval()
     agent.target_net.eval()
@@ -78,7 +77,8 @@ def evaluate_checkpoint(
 
 if __name__ == "__main__":
     evaluate_checkpoint(
-        checkpoint_path="checkpoints/dqn/checkpoints_v1/latest.pt",
+        checkpoint_path="checkpoints/dqn/checkpoints_v1/final.pt",
         episodes = 20,
         seed = 10_000,
     )
+
