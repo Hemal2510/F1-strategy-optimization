@@ -187,6 +187,7 @@ class DQNAgent:
         reward: float,
         next_obs: np.ndarray,
         done: bool,
+        next_action_mask: Optional[np.ndarray] = None,
     ) -> None:
         """
         Store one environment transition in replay buffer.
@@ -200,6 +201,7 @@ class DQNAgent:
             reward=scaled_reward,
             next_obs=next_obs,
             done=done,
+            next_action_mask=next_action_mask  #NEW
         )
 
     def train_step(self) -> Optional[Dict[str, Any]]:
@@ -226,7 +228,9 @@ class DQNAgent:
         ).squeeze(1)
 
         with torch.no_grad():
-            next_actions = self.online_net(batch.next_obs).argmax(dim=1)
+            next_q_online = self.online_net(batch.next_obs)
+            next_q_online = next_q_online.masked_fill(~batch.next_action_mask, -1e9)  # NEW
+            next_actions = next_q_online.argmax(dim=1)
 
             next_q = self.target_net(batch.next_obs).gather(
                 dim=1,
@@ -319,4 +323,3 @@ class DQNAgent:
         self.optimizer.load_state_dict(checkpoint["optimizer"])
 
         self.total_steps = checkpoint.get("total_steps", 0)
-
