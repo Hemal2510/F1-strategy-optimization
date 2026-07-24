@@ -70,7 +70,7 @@ class QRLAgent:
         self.target_net.eval()
 
         # Initialize optimizer
-        self.optimizer = torch.optim.Adam(self.online_net.parameters(), lr=config.lr)
+        self.optimizer = torch.optim.AdamW(self.online_net.parameters(), lr=config.lr)
 
         # Create the replay buffer
         self.replay = PrioritizedReplayBuffer(
@@ -135,9 +135,10 @@ class QRLAgent:
         reward: float,
         next_obs: np.ndarray,
         done: bool,
+        next_action_mask: Optional[np.ndarray] = None,
     ) -> None:
         scaled_reward = reward * self.config.reward_scale
-        self.replay.add(obs=obs, action=action, reward=scaled_reward, next_obs=next_obs, done=done)
+        self.replay.add(obs=obs, action=action, reward=scaled_reward, next_obs=next_obs, done=done, next_action_mask=next_action_mask)
  
     def train_step(self) -> Optional[Dict[str, Any]]:
         if len(self.replay) < self.config.learning_starts:
@@ -152,7 +153,10 @@ class QRLAgent:
         current_q = q_values.gather(dim=1, index=batch.actions.unsqueeze(1)).squeeze(1)
  
         with torch.no_grad():
-            next_actions = self.online_net(batch.next_obs).argmax(dim=1)
+            next_q_online = self.online_net(batch.next_obs)
+            next_q_online = next_q_online.masked_fill(~batch.next_action_mask, -1e9)  # NEW
+            next_actions = next_q_online.argmax(dim=1)
+            
             next_q = self.target_net(batch.next_obs).gather(
                 dim=1, index=next_actions.unsqueeze(1)
             ).squeeze(1)

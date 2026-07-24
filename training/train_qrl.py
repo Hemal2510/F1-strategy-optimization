@@ -28,7 +28,7 @@ def set_global_seed(seed: int) -> None:
 def train_qrl(
     total_episodes: int = 1500,
     seed: int = 42,
-    checkpoint_dir: str = "checkpoints/qrl/checkpoints_qrl_v5",
+    checkpoint_dir: str = "checkpoints/qrl/checkpoints_qrl_v6",
 ):
     set_global_seed(seed)
  
@@ -88,11 +88,14 @@ def train_qrl(
  
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
+            next_mask = get_action_mask(env)   # NEW — mask for the state you just landed in
  
             if action != 0:
                 pit_count += 1
  
-            agent.store(obs=obs, action=action, reward=reward, next_obs=next_obs, done=done)
+            agent.store(obs=obs, action=action, reward=reward,
+            next_obs=next_obs, done=done, next_action_mask=next_mask)  # pass it through
+            
             agent.total_steps += 1#increment total steps taken by the agent
  
             metrics = agent.train_step()#train the agent and get loss metrics
@@ -151,6 +154,6 @@ if __name__ == "__main__":
     train_qrl(
         total_episodes=1500,
         seed=42,
-        checkpoint_dir="checkpoints/qrl/checkpoints_qrl_v5",
+        checkpoint_dir="checkpoints/qrl/checkpoints_qrl_v6",
     )
  
