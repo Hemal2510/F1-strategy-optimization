@@ -13,12 +13,6 @@ from agents.dqn.replay_buffer import PrioritizedReplayBuffer
 
 @dataclass
 class DQNConfig:
-    """
-    Configuration for the DQN agent.
-
-    This keeps all hyperparameters in one clean place.
-    """
-
     obs_dim: int = 15
     action_dim: int = 6
 
@@ -48,19 +42,6 @@ class DQNConfig:
 
 
 class DQNAgent:
-    """
-    Double DQN + Dueling DQN + Prioritized Replay agent.
-
-    This class is responsible for:
-        1. Creating the online network
-        2. Creating the target network
-        3. Selecting actions
-        4. Storing experience
-        5. Training the DQN
-        6. Updating replay priorities
-        7. Saving and loading models
-    """
-
     def __init__(self, config: DQNConfig):
         self.cfg = config
         self.device = torch.device(config.device)
@@ -97,34 +78,17 @@ class DQNAgent:
         self.total_steps = 0
 
     def _set_seeds(self, seed: int) -> None:
-        """
-        Set random seeds for reproducible training.
-        """
-
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
-
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
     def epsilon(self) -> float:
-        """
-        Calculate current epsilon value for epsilon-greedy exploration.
-
-        At the beginning:
-            epsilon is high → agent explores a lot.
-
-        Later:
-            epsilon becomes low → agent uses learned strategy more.
-        """
-
         progress = min(1.0, self.total_steps / self.cfg.epsilon_decay_steps)
-
         epsilon = self.cfg.epsilon_start + progress * (
             self.cfg.epsilon_final - self.cfg.epsilon_start
         )
-
         return epsilon
 
     @torch.no_grad()
@@ -134,19 +98,6 @@ class DQNAgent:
         evaluation: bool = False,
         action_mask: Optional[np.ndarray] = None,
     ) -> int:
-        """
-        Select an action using epsilon-greedy policy.
-
-        During training:
-            sometimes choose random action for exploration.
-
-        During evaluation:
-            always choose best action from network.
-
-        action_mask is optional.
-        It can block illegal actions later if needed.
-        """
-
         if evaluation:
             epsilon = 0.0
         else:
@@ -173,11 +124,9 @@ class DQNAgent:
                 dtype=torch.bool,
                 device=self.device,
             )
-
             q_values = q_values.masked_fill(~mask_tensor, -1e9)
 
         action = torch.argmax(q_values).item()
-
         return int(action)
 
     def store(
@@ -189,29 +138,17 @@ class DQNAgent:
         done: bool,
         next_action_mask: Optional[np.ndarray] = None,
     ) -> None:
-        """
-        Store one environment transition in replay buffer.
-        """
-
         scaled_reward = reward * self.cfg.reward_scale
-
         self.replay.add(
             obs=obs,
             action=action,
             reward=scaled_reward,
             next_obs=next_obs,
             done=done,
-            next_action_mask=next_action_mask  #NEW
+            next_action_mask=next_action_mask
         )
 
     def train_step(self) -> Optional[Dict[str, Any]]:
-        """
-        Train the DQN for one gradient step.
-
-        Returns training metrics if training happened.
-        Returns None if replay buffer is not ready yet.
-        """
-
         if len(self.replay) < self.cfg.learning_starts:
             return None
 
@@ -221,7 +158,6 @@ class DQNAgent:
         batch = self.replay.sample(self.cfg.batch_size)
 
         q_values = self.online_net(batch.obs)
-
         current_q = q_values.gather(
             dim=1,
             index=batch.actions.unsqueeze(1),
@@ -229,7 +165,7 @@ class DQNAgent:
 
         with torch.no_grad():
             next_q_online = self.online_net(batch.next_obs)
-            next_q_online = next_q_online.masked_fill(~batch.next_action_mask, -1e9)  # NEW
+            next_q_online = next_q_online.masked_fill(~batch.next_action_mask, -1e9)
             next_actions = next_q_online.argmax(dim=1)
 
             next_q = self.target_net(batch.next_obs).gather(
@@ -246,13 +182,10 @@ class DQNAgent:
             target_q,
             reduction="none",
         )
-
         weighted_loss = elementwise_loss * batch.weights
-
         loss = weighted_loss.mean()
 
         self.optimizer.zero_grad(set_to_none=True)
-
         loss.backward()
 
         torch.nn.utils.clip_grad_norm_(
@@ -279,12 +212,6 @@ class DQNAgent:
         return metrics
 
     def _soft_update_target_network(self) -> None:
-        """
-        Slowly update target network toward online network.
-
-        target = tau * online + (1 - tau) * target
-        """
-
         with torch.no_grad():
             for target_param, online_param in zip(
                 self.target_net.parameters(),
@@ -294,10 +221,6 @@ class DQNAgent:
                 target_param.data.add_(self.cfg.tau * online_param.data)
 
     def save(self, path: str) -> None:
-        """
-        Save model checkpoint.
-        """
-
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -308,18 +231,11 @@ class DQNAgent:
             "optimizer": self.optimizer.state_dict(),
             "total_steps": self.total_steps,
         }
-
         torch.save(checkpoint, path)
 
     def load(self, path: str) -> None:
-        """
-        Load model checkpoint.
-        """
-
         checkpoint = torch.load(path, map_location=self.device)
-
         self.online_net.load_state_dict(checkpoint["online_net"])
         self.target_net.load_state_dict(checkpoint["target_net"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
-
         self.total_steps = checkpoint.get("total_steps", 0)

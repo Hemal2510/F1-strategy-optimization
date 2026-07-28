@@ -12,7 +12,7 @@ class ReplayBatch:
     dones: torch.Tensor
     weights: torch.Tensor
     indices: np.ndarray
-    next_action_mask: torch.Tensor   # NEW
+    next_action_mask: torch.Tensor
 
 
 class PrioritizedReplayBuffer:
@@ -25,7 +25,7 @@ class PrioritizedReplayBuffer:
         beta_frames: int = 100_000,
         eps: float = 1e-6,
         device: str = "cpu",
-        action_dim: int = 6,  # NEW
+        action_dim: int = 6,
     ):
         self.capacity = int(capacity)
         self.obs_dim = int(obs_dim)
@@ -49,12 +49,12 @@ class PrioritizedReplayBuffer:
         self.size = 0
         self.frame = 1
 
-        self.next_action_masks = np.ones((self.capacity, self.action_dim), dtype=bool)  # NEW
-        
+        self.next_action_masks = np.ones((self.capacity, self.action_dim), dtype=bool)
+
     def __len__(self) -> int:
         return self.size
 
-    def add(self, obs, action, reward, next_obs, done, next_action_mask):  # NEW arg
+    def add(self, obs, action, reward, next_obs, done, next_action_mask):
         if self.size == 0:
             max_priority = 1.0
         else:
@@ -71,18 +71,15 @@ class PrioritizedReplayBuffer:
         self.pos = (self.pos + 1) % self.capacity
         self.size = min(self.size + 1, self.capacity)
 
-        self.next_action_masks[self.pos] = next_action_mask  # NEW
+        self.next_action_masks[self.pos] = next_action_mask
 
     def _beta(self) -> float:
         progress = min(1.0, self.frame / self.beta_frames)
         beta = self.beta_start + progress * (1.0 - self.beta_start)
-
         self.frame += 1
-
         return beta
 
     def sample(self, batch_size: int) -> ReplayBatch:
-
         if self.size < batch_size:
             raise ValueError(
                 f"Not enough samples in replay buffer. "
@@ -90,7 +87,6 @@ class PrioritizedReplayBuffer:
             )
 
         priorities = self.priorities[:self.size]
-
         scaled_priorities = priorities ** self.alpha
         probabilities = scaled_priorities / scaled_priorities.sum()
 
@@ -113,7 +109,8 @@ class PrioritizedReplayBuffer:
             next_obs=torch.as_tensor(self.next_obs[indices], dtype=torch.float32, device=self.device),
             dones=torch.as_tensor(self.dones[indices], dtype=torch.float32, device=self.device),
             weights=torch.as_tensor(weights, dtype=torch.float32, device=self.device),
-            indices=indices,next_action_mask=torch.as_tensor(
+            indices=indices,
+            next_action_mask=torch.as_tensor(
                 self.next_action_masks[indices], dtype=torch.bool, device=self.device
             ),
         )
@@ -121,9 +118,6 @@ class PrioritizedReplayBuffer:
         return batch
 
     def update_priorities(self, indices, td_errors):
-
         td_errors = np.asarray(td_errors, dtype=np.float32)
-
         new_priorities = np.abs(td_errors) + self.eps
-
         self.priorities[indices] = new_priorities

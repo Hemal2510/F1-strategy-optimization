@@ -1,19 +1,12 @@
 import numpy as np
 
 from env.f1_env import F1StrategyEnv
+from agents.baselines import RandomPolicy, AlwaysStayOutPolicy, RuleAwareHeuristicPolicy
+from agents.real_agent import RealDriverPolicy
+from agents.dqn.dqn_agent import DQNAgent, DQNConfig
+from agents.qrl.qrl_agent import QRLAgent, QRLConfig
 from agents.dqn.action_mask import get_action_mask
-
-# Import all policy classes from evaluate_all to avoid duplication
-from evaluation.evaluate_all import (
-    RandomPolicy,
-    AlwaysStayOutPolicy,
-    RuleAwareHeuristicPolicy,
-    DQNPolicy,
-    QRLPolicy,
-    RealDriverPolicy,
-)
-
-# ── Configuration ──────────────────────────────────────────────────────────────
+from evaluation.evaluate_all import DQNPolicy, QRLPolicy
 
 YEAR    = 2025
 SEED    = 42
@@ -21,18 +14,7 @@ TRACKS  = ["Monaco", "Monza", "Silverstone"]
 DRIVERS = ["VER", "LEC", "HAM"]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Single-episode runner
-# ══════════════════════════════════════════════════════════════════════════════
-
 def run_single_episode(policy, track: str, year: int, driver: str, seed: int) -> dict:
-    """
-    Run one episode with the environment pinned to (track, year, driver).
-
-    Returns
-    -------
-    dict with keys: policy, ep_return, start_pos, end_pos, pits, rule_violated
-    """
     env = F1StrategyEnv()
 
     policy.reset()
@@ -41,7 +23,6 @@ def run_single_episode(policy, track: str, year: int, driver: str, seed: int) ->
         options={"track": track, "year": year, "driver": driver},
     )
 
-    # Capture grid / starting position right after reset (before any steps)
     start_pos = env.state.start_position
 
     done       = False
@@ -72,14 +53,9 @@ def run_single_episode(policy, track: str, year: int, driver: str, seed: int) ->
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Printing
-# ══════════════════════════════════════════════════════════════════════════════
-
-COL_W = 95  # total table width
+COL_W = 95
 
 def print_driver_table(track: str, driver: str, results: list):
-    """Print a formatted results table for one (track, driver) combination."""
     header = f"  Track: {track}  |  Driver: {driver}  |  Year: {YEAR}  "
     print("\n\n" + "=" * COL_W)
     print(header.center(COL_W))
@@ -89,7 +65,7 @@ def print_driver_table(track: str, driver: str, results: list):
         f"{'End Pos':>7} | {'Pits':>4} | {'Rule Viol':>9}"
     )
     print("-" * COL_W)
-    # Rank by return descending
+
     for r in sorted(results, key=lambda x: x["ep_return"], reverse=True):
         viol_str = "YES" if r["rule_violated"] else "no"
         print(
@@ -99,10 +75,6 @@ def print_driver_table(track: str, driver: str, results: list):
         )
     print()
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Main
-# ══════════════════════════════════════════════════════════════════════════════
 
 def build_policies():
     return [
@@ -123,12 +95,10 @@ def main():
 
     for track in TRACKS:
         for driver in DRIVERS:
-         
-            policies = build_policies()   # fresh instances per (track, driver)
+            policies = build_policies()
             results  = []
 
             for policy in policies:
-
                 try:
                     r = run_single_episode(
                         policy, track, YEAR, driver,

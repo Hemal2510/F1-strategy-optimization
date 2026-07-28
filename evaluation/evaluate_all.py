@@ -1,30 +1,13 @@
-"""
-evaluate_all.py
----------------
-Final comparison of all policies:
-  - 4 classical baselines
-  - Best DQN checkpoint  : checkpoints/dqn/checkpoints_v2/best.pt
-  - Best QRL checkpoint  : checkpoints/qrl/checkpoints_qrl_v6/latest.pt
-  - Real Driver          : replays the actual strategy used in each race
-
-Winners were identified by a full sweep across all available versions
-and weight types (best / latest / final). These two checkpoints scored
-highest in mean return across 20 evaluation episodes.
-
-Usage:
-    python -m evaluation.evaluate_all
-    (run from the project root)
-"""
-
 import numpy as np
 
 from env.f1_env import F1StrategyEnv
 from agents.dqn.dqn_agent import DQNAgent, DQNConfig
 from agents.qrl.qrl_agent import QRLAgent, QRLConfig
 from agents.dqn.action_mask import get_action_mask
-from agents.real.real_agent import RealDriverPolicy
+from agents.baselines import RandomPolicy, AlwaysStayOutPolicy, RuleAwareHeuristicPolicy
+from agents.real_agent import RealDriverPolicy
 
-# ── Best checkpoints (selected by full sweep) ──────────────────────────────────
+# Checkpoint paths
 BEST_DQN_CHECKPOINT = "checkpoints/dqn/checkpoints_v2/best.pt"
 BEST_QRL_CHECKPOINT = "checkpoints/qrl/checkpoints_qrl_v6/latest.pt"
 
@@ -42,95 +25,7 @@ ACTION_NAMES = {
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Baseline policies
-# ══════════════════════════════════════════════════════════════════════════════
-
-class RandomPolicy:
-    """Baseline 1: Pick a random action every lap."""
-    name = "Random"
-
-    def reset(self):
-        pass
-
-    def act(self, env, obs):
-        return env.action_space.sample()
-
-
-class AlwaysStayOutPolicy:
-    """Baseline 2: Never pit."""
-    name = "Always Stay Out"
-
-    def reset(self):
-        pass
-
-    def act(self, env, obs):
-        return 0
-
-
-
-
-class RuleAwareHeuristicPolicy:
-    """
-    Baseline 4: Hand-written strategy that reacts to weather,
-    avoids immediate back-to-back stops, and enforces the 2-compound rule.
-    """
-    name = "Rule Aware Heuristic"
-
-    def __init__(self):
-        self.last_pit_lap = -999
-
-    def reset(self):
-        self.last_pit_lap = -999
-
-    def act(self, env, obs):
-        cur = env.state.current_lap
-        mx  = env.max_laps
-        age = env.state.tyre_age
-        cmp = env.state.tyre_compound
-        wet = env.state.track_wetness
-        remaining = mx - cur
-
-        # Avoid pitting again immediately after a stop
-        if cur - self.last_pit_lap <= 3:
-            return 0
-
-        # Heavy wet: switch to wet tyre
-        if wet >= 1.5 and cmp != 4:
-            self.last_pit_lap = cur
-            return 5  # pit wet
-
-        # Damp: switch to intermediate
-        if 0 < wet < 1.5 and cmp != 3:
-            self.last_pit_lap = cur
-            return 4  # pit intermediate
-
-        if wet == 0:
-            dry_used = env.compounds_used & {0, 1, 2}
-
-            # Force compound change if 2-compound rule not satisfied near end
-            if len(dry_used) < 2 and remaining <= 8:
-                self.last_pit_lap = cur
-                return 3 if cmp != 2 else 2  # pit hard or medium
-
-            # Normal one-stop when tyres are old
-            if cur >= int(0.45 * mx) and age >= 18:
-                self.last_pit_lap = cur
-                return 3 if cmp != 2 else 2
-
-        return 0
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Trained agent policies  (best checkpoints from sweep)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class DQNPolicy:
-    """
-    Best DQN agent — checkpoints/dqn/checkpoints_v2/best.pt
-    Achieved mean return -31.28 and mean finishing position 4.10
-    across 20 evaluation episodes in the full checkpoint sweep.
-    """
     name = "DQN (best – v2/best.pt)"
 
     def __init__(self):
@@ -149,11 +44,6 @@ class DQNPolicy:
 
 
 class QRLPolicy:
-    """
-    Best QRL agent — checkpoints/qrl/checkpoints_qrl_v6/latest.pt
-    Achieved mean return -33.44 and mean finishing position 3.85
-    across 20 evaluation episodes in the full checkpoint sweep.
-    """
     name = "QRL (best – v6/latest.pt)"
 
     def __init__(self):
@@ -171,12 +61,7 @@ class QRLPolicy:
         return self.agent.select_action(obs, evaluation=True, action_mask=mask)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Evaluation runner
-# ══════════════════════════════════════════════════════════════════════════════
-
 def evaluate_policy(policy, episodes=EPISODES, seed=SEED):
-    """Run a policy for `episodes` episodes and return a summary dict."""
     env = F1StrategyEnv()
     returns, positions, pit_counts, violations, action_histories = [], [], [], [], []
 
@@ -248,7 +133,6 @@ def main():
         print_summary(s)
         summaries.append(s)
 
-    # ── Final ranked comparison table ──────────────────────────────────────────
     ranked = sorted(summaries, key=lambda x: x["mean_return"], reverse=True)
     print("\n\n" + "=" * 95)
     print("FINAL COMPARISON TABLE  (ranked by mean return, descending)")
