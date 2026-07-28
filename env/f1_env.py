@@ -66,7 +66,7 @@ class F1StrategyEnv(gym.Env):
             idx = int(self.np_random.integers(0, len(eligible)))
             self.name = eligible[idx]
 
-        print(f"Track: {self.track}  Year: {self.year}  Agent: {self.name}")
+
 
         # Fix 6b: Use the driver's actual race-start compound from data.
         # Previously always Medium (1). Now reflects real tyre choices.

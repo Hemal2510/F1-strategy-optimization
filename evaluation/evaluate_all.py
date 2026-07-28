@@ -5,6 +5,7 @@ Final comparison of all policies:
   - 4 classical baselines
   - Best DQN checkpoint  : checkpoints/dqn/checkpoints_v2/best.pt
   - Best QRL checkpoint  : checkpoints/qrl/checkpoints_qrl_v6/latest.pt
+  - Real Driver          : replays the actual strategy used in each race
 
 Winners were identified by a full sweep across all available versions
 and weight types (best / latest / final). These two checkpoints scored
@@ -21,6 +22,7 @@ from env.f1_env import F1StrategyEnv
 from agents.dqn.dqn_agent import DQNAgent, DQNConfig
 from agents.qrl.qrl_agent import QRLAgent, QRLConfig
 from agents.dqn.action_mask import get_action_mask
+from agents.real.real_agent import RealDriverPolicy
 
 # ── Best checkpoints (selected by full sweep) ──────────────────────────────────
 BEST_DQN_CHECKPOINT = "checkpoints/dqn/checkpoints_v2/best.pt"
@@ -66,27 +68,6 @@ class AlwaysStayOutPolicy:
         return 0
 
 
-class OneStopHardPolicy:
-    """Baseline 3: One planned stop to hard tyres around mid-race."""
-    name = "One Stop Hard"
-
-    def __init__(self):
-        self.has_pitted = False
-
-    def reset(self):
-        self.has_pitted = False
-
-    def act(self, env, obs):
-        if env.state.track_wetness > 0:
-            return 0
-        if (
-            not self.has_pitted
-            and env.state.current_lap >= int(0.45 * env.max_laps)
-            and env.state.tyre_age >= 15
-        ):
-            self.has_pitted = True
-            return 3  # pit hard
-        return 0
 
 
 class RuleAwareHeuristicPolicy:
@@ -254,10 +235,10 @@ def main():
     policies = [
         RandomPolicy(),
         AlwaysStayOutPolicy(),
-        OneStopHardPolicy(),
         RuleAwareHeuristicPolicy(),
         DQNPolicy(),
         QRLPolicy(),
+        RealDriverPolicy(),
     ]
 
     summaries = []
