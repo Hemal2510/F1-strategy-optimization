@@ -15,8 +15,8 @@ from env.f1_env import F1StrategyEnv
 from .adapters import build_adapters
 from .schema import DEFAULT_ACTION_NAMES, EPISODE_COLUMNS, lap_columns
 from .utils import (
-    ensure_directory,
-    first_available,
+    ensure_dir,
+    first_present,
     observation_to_json,
     set_global_seed,
     write_json,
@@ -37,74 +37,74 @@ def snapshot_environment(
     sources = [info, state, env]
 
     return {
-        "track": first_available(
+        "track": first_present(
             sources,
             ["track", "track_name", "circuit"],
             "unknown",
         ),
-        "year": first_available(
+        "year": first_present(
             sources,
             ["year", "season"],
             "unknown",
         ),
-        "race_name": first_available(
+        "race_name": first_present(
             sources,
             ["name", "race_name", "event_name"],
             "unknown",
         ),
-        "current_lap": first_available(
+        "current_lap": first_present(
             sources,
             ["current_lap", "lap", "lap_number"],
         ),
-        "position": first_available(
+        "position": first_present(
             sources,
             ["position", "current_position", "end_position"],
         ),
-        "starting_position": first_available(
+        "starting_position": first_present(
             sources,
             ["starting_position", "start_position", "grid_position"],
         ),
-        "final_position": first_available(
+        "final_position": first_present(
             sources,
             ["final_position", "end_position"],
         ),
-        "tyre_compound": first_available(
+        "tyre_compound": first_present(
             sources,
             ["tyre_compound", "compound"],
         ),
-        "tyre_age": first_available(
+        "tyre_age": first_present(
             sources,
             ["tyre_age", "tyre_life"],
         ),
-        "track_wetness": first_available(
+        "track_wetness": first_present(
             sources,
             ["track_wetness", "wetness"],
         ),
-        "safety_car_flag": first_available(
+        "safety_car_flag": first_present(
             sources,
             ["safety_car_flag", "safety_car", "sc_flag"],
         ),
-        "pit_window": first_available(
+        "pit_window": first_present(
             sources,
             ["pit_window", "in_pit_window"],
         ),
-        "gap_to_leader": first_available(
+        "gap_to_leader": first_present(
             sources,
             ["gap_to_leader"],
         ),
-        "gap_ahead": first_available(
+        "gap_ahead": first_present(
             sources,
             ["gap_ahead"],
         ),
-        "gap_behind": first_available(
+        "gap_behind": first_present(
             sources,
             ["gap_behind"],
         ),
-        "lap_time": first_available(
+        "lap_time": first_present(
             sources,
             ["lap_time", "simulated_lap_time"],
         ),
-        "lap_delta": first_available(
+        "lap_delta": first_present(
             sources,
             ["lap_delta", "delta"],
         ),
@@ -392,7 +392,7 @@ def run_episode(
 
 def evaluate(config: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Evaluate all enabled agents on all configured seeds."""
-    output_dir = ensure_directory(
+    output_dir = ensure_dir(
         config["output_dir"]
     )
 

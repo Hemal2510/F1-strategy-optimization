@@ -88,20 +88,12 @@ def first_present(sources: Iterable[Any], names: Iterable[str], default: Any = N
     return default
 
 
-def first_available(sources: Iterable[Any], names: Iterable[str], default: Any = None) -> Any:
-    """Alias for first_present, kept because evaluator.py imports this name."""
-    return first_present(sources, names, default)
-
 
 def ensure_dir(path: str | Path) -> Path:
     target = Path(path)
     target.mkdir(parents=True, exist_ok=True)
     return target
 
-
-def ensure_directory(path: str | Path) -> Path:
-    """Alias for ensure_dir, kept because evaluator.py imports this name."""
-    return ensure_dir(path)
 
 
 def write_json(path: str | Path, payload: Dict[str, Any]) -> None:

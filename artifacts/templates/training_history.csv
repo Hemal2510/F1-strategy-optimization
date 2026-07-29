@@ -1,1 +1,0 @@
-agent,seed,episode,environment_steps,episode_return,rolling_return,final_position,pit_count,loss,mean_q,mean_target_q,epsilon,replay_size,wall_time_s,checkpoint_path
