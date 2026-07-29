@@ -13,10 +13,10 @@
 |:--------------------|----------:|----------:|
 | final_position      |    3.4400 |    4.3200 |
 | invalid_action_rate |    0.0000 |    0.0000 |
-| mean_inference_ms   |    0.5964 |   42.1662 |
+| mean_inference_ms   |    0.4941 |   36.5463 |
 | mean_lap_delta      |    7.5299 |    9.2688 |
 | mean_lap_time       |   93.1550 |   94.7620 |
-| p95_inference_ms    |    0.9233 |   50.5830 |
+| p95_inference_ms    |    0.6822 |   42.9542 |
 | pit_count           |    1.6400 |    2.0400 |
 | position_gain       |    4.0000 |    3.1200 |
 | total_race_time     | 5350.2689 | 5442.3099 |
@@ -34,8 +34,8 @@
 | mean_lap_delta      |            25 |    7.5299 |    9.2688 |           1.7389 |             0.0029 |             0.0042 | dqn                |
 | pit_count           |            25 |    1.6400 |    2.0400 |           0.4000 |             0.1155 |             0.0876 | qrl                |
 | invalid_action_rate |            25 |    0.0000 |    0.0000 |           0.0000 |           nan      |           nan      | tie                |
-| mean_inference_ms   |            25 |    0.5964 |   42.1662 |          41.5697 |             0.0000 |             0.0000 | dqn                |
-| p95_inference_ms    |            25 |    0.9233 |   50.5830 |          49.6597 |             0.0000 |             0.0000 | dqn                |
+| mean_inference_ms   |            25 |    0.4941 |   36.5463 |          36.0522 |             0.0000 |             0.0000 | dqn                |
+| p95_inference_ms    |            25 |    0.6822 |   42.9542 |          42.2719 |             0.0000 |             0.0000 | dqn                |
 
 ## How to interpret the results
 

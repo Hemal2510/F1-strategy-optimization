@@ -1,12 +1,12 @@
 import gymnasium as gym
 import numpy as np
 
-
 from env.race_state import RaceState
 from env.reward import RewardCalculator
 from env.race_backend import RaceBackend
 from env.race_session import RaceSession
-from env.data.data_for_env import Env_data
+from data.data_for_env import Env_data
+
 
 class F1StrategyEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
@@ -15,7 +15,11 @@ class F1StrategyEnv(gym.Env):
         super().__init__()
 
         self.reward_calc = RewardCalculator()
-        self.available_races  = (("Monaco", 2024), ("Monza", 2024), ("Silverstone", 2024),("Monaco", 2023), ("Monza", 2023), ("Silverstone", 2023),("Monaco", 2022), ("Monza", 2022), ("Silverstone", 2022))
+        self.available_races = (
+            ("Monaco", 2024), ("Monza", 2024), ("Silverstone", 2024),
+            ("Monaco", 2023), ("Monza", 2023), ("Silverstone", 2023),
+            ("Monaco", 2022), ("Monza", 2022), ("Silverstone", 2022)
+        )
 
         self.action_space = gym.spaces.Discrete(6)
         self.observation_space = gym.spaces.Box(
@@ -25,16 +29,14 @@ class F1StrategyEnv(gym.Env):
             dtype=np.float32
         )
 
-    def reset(self, seed=None , options = None):
-        super().reset(seed= seed)
-
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
 
         if options:
             self.track = options.get("track")
             self.year  = options.get("year")
-            self.name  = options.get("driver", None)  # allow explicit override
+            self.name  = options.get("driver", None)
         else:
-          
             idx = int(self.np_random.integers(0, len(self.available_races)))
             self.track, self.year = self.available_races[idx]
             self.name = None  
@@ -43,13 +45,11 @@ class F1StrategyEnv(gym.Env):
         self.race_backend = RaceBackend(self.env_data.data)
         self.race_session = RaceSession(self.env_data.data)
 
-
         self.max_laps       = self.env_data.data["max_laps"]
         self.total_players  = self.env_data.data["total_drivers"]
         self.safety_car_times = self.env_data.data["safety_car"]
         self.track_wetness  = self.env_data.data["track_wetness"]
 
-    
         if self.name is None:
             lap_times_data  = self.env_data.data["lap_times"]
             starting_grid   = self.env_data.data["starting_grid"]
@@ -61,25 +61,21 @@ class F1StrategyEnv(gym.Env):
                     if d in lap_times_data.get(lap, {})
                 ) >= min_laps
             ]
-            if not eligible:          # safety fallback: entire grid
+            if not eligible:
                 eligible = starting_grid
             idx = int(self.np_random.integers(0, len(eligible)))
             self.name = eligible[idx]
 
-        print(f"Track: {self.track}  Year: {self.year}  Agent: {self.name}")
-
-        # Fix 6b: Use the driver's actual race-start compound from data.
-        # Previously always Medium (1). Now reflects real tyre choices.
+        # Starting compound from race data
         starting_compounds  = self.env_data.data.get("starting_compounds", {})
-        initial_tyre_compound = starting_compounds.get(self.name, 1)  # fallback: Medium
+        initial_tyre_compound = starting_compounds.get(self.name, 1)
         self.compounds_used = {initial_tyre_compound}
 
         self.race_session.step(0, 0, self.name)
-        arranged_cars= self.race_session.get_agent_state(self.name)
-
+        arranged_cars = self.race_session.get_agent_state(self.name)
         gap_ahead = arranged_cars['gap_ahead']
 
-        # Generate seeded noise for Lap 1
+        # Lap 1 simulation
         noise = self.np_random.normal(0, 0.15)
         lap_time, lap_delta = self.race_backend.simulated_lap_time(
             1,
@@ -96,30 +92,25 @@ class F1StrategyEnv(gym.Env):
         initial_state = self.race_session.get_agent_state(self.name)
 
         self.state = RaceState(
-            current_lap = 1,
-            lap_time = lap_time,
-            lap_delta = lap_delta,
-        
-            start_position = arranged_cars["current_position"],
-            end_position= initial_state['current_position'],
-
-            tyre_compound = initial_tyre_compound,
-            tyre_age=  1,
-            
-            gap_leader = initial_state["gap_leader"],
-            gap_ahead =  initial_state["gap_ahead"],
-            gap_behind=  initial_state["gap_behind"],
-
-            safety_car = self.safety_car_times[1],
-            track_wetness = self.track_wetness[1],
+            current_lap=1,
+            lap_time=lap_time,
+            lap_delta=lap_delta,
+            start_position=arranged_cars["current_position"],
+            end_position=initial_state['current_position'],
+            tyre_compound=initial_tyre_compound,
+            tyre_age=1,
+            gap_leader=initial_state["gap_leader"],
+            gap_ahead=initial_state["gap_ahead"],
+            gap_behind=initial_state["gap_behind"],
+            safety_car=self.safety_car_times[1],
+            track_wetness=self.track_wetness[1],
         )
-        return self._get_obs() , {}
+        return self._get_obs(), {}
 
     def _get_obs(self):
         tyre = [0, 0, 0, 0, 0]
         tyre[self.state.tyre_compound] = 1
 
-       
         compound    = self.state.tyre_compound
         current_deg = self.race_backend.tyre_model.degradation(compound, self.state.tyre_age)
         curve       = self.race_backend.tyre_model.degradation_curves[compound]
@@ -127,38 +118,31 @@ class F1StrategyEnv(gym.Env):
         ref_deg     = curve[ref_age]
         tyre_wear   = min(current_deg / max(ref_deg, 0.01), 1.0)
 
-        # Has the agent already satisfied the 2-distinct-dry-compound rule?
+        # Check 2 dry compound rule
         dry_compounds_used = self.compounds_used & {0, 1, 2}
         compounds_rule_met = float(len(dry_compounds_used) >= 2)
 
         obs = np.array([
-            self.state.current_lap / self.max_laps,                          # [0]  race progress
-            self.state.end_position / self.total_players,                    # [1]  current position
-            max(0.0, 1.0 - self.state.lap_delta / 10.0),                    # [2]  pace vs field fastest
-
+            self.state.current_lap / self.max_laps,
+            self.state.end_position / self.total_players,
+            max(0.0, 1.0 - self.state.lap_delta / 10.0),
             tyre[0],
-            tyre[1],                           # [3–7] tyre compound one-hot
+            tyre[1],
             tyre[2],
             tyre[3],
             tyre[4],
-
-            tyre_wear,                                                       # [8]  track-relative tyre wear
-
-            min(self.state.gap_leader / 40, 1),                              # [9]  gap to leader
-            min(self.state.gap_ahead / 10, 1),                              # [10] gap ahead
-            min(self.state.gap_behind / 10, 1),                             # [11] gap behind
-
-            self.state.safety_car / 2.0,                                    # [12] 0=green, 0.5=VSC, 1=SC
-
-            self.state.track_wetness / 2.0,                                 # [13] track wetness
-            compounds_rule_met,                                             # [14] 2-compound rule satisfied
-
+            tyre_wear,
+            min(self.state.gap_leader / 40, 1),
+            min(self.state.gap_ahead / 10, 1),
+            min(self.state.gap_behind / 10, 1),
+            self.state.safety_car / 2.0,
+            self.state.track_wetness / 2.0,
+            compounds_rule_met,
         ], dtype=np.float32)
 
         return obs
 
-    
-    def step (self, action):
+    def step(self, action):
         pitted = False
         previous_tyre_age = self.state.tyre_age
 
@@ -172,12 +156,10 @@ class F1StrategyEnv(gym.Env):
         self.state.tyre_age += 1
         self.state.safety_car = self.safety_car_times[self.state.current_lap]
         track_wetness = self.track_wetness[self.state.current_lap]
-        self.state.track_wetness = track_wetness   # keep state in sync for _get_obs()
+        self.state.track_wetness = track_wetness
 
-        # Generate seeded noise for simulated lap time
         noise = self.np_random.normal(0, 0.15)
 
-        # Calculate current lap simulated lap time FIRST (fixes the 1-lap standings lag)
         lap_time, lap_delta = self.race_backend.simulated_lap_time(
             self.state.current_lap,
             self.state.tyre_compound,
@@ -189,9 +171,8 @@ class F1StrategyEnv(gym.Env):
             noise=noise
         )
 
-        # Now update race session database with the correct time for the current lap
         self.race_session.step(self.state.current_lap, lap_time, self.name)
-        state_now = self.race_session.get_agent_state(agent_name= self.name)
+        state_now = self.race_session.get_agent_state(agent_name=self.name)
 
         prev_gap_leader = self.state.gap_leader
 
@@ -223,23 +204,17 @@ class F1StrategyEnv(gym.Env):
             if previous_tyre_age <= 5:
                 reward -= 20.0
 
-        # Enforce standard F1 rule: must use at least 2 distinct DRY compounds.
-        # Checked using dry-only set to match the compounds_rule_met observation signal.
+        # Enforce 2 dry compound rule at end of race
         if terminated:
             is_wet_race = any(w > 0 for w in self.track_wetness)
             dry_used = self.compounds_used & {0, 1, 2}
             if not is_wet_race and len(dry_used) < 2:
-                reward -= 150.0  # Severe penalty for violating the 2-compound rule
+                reward -= 150.0
 
-            # Terminal reward: official F1 championship points for finishing position.
-            # This is the primary objective F1 strategy actually optimises for.
             F1_POINTS = {1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}
             reward += F1_POINTS.get(self.state.end_position, 0)
 
         return self._get_obs(), reward, terminated, False, {}
-
-      
-        
 
     def render(self):
         tyre_chart = {
@@ -257,23 +232,4 @@ End Position: {self.state.end_position}
 Tyre: {tyre_chart[self.state.tyre_compound]}
 Tyre Age: {self.state.tyre_age}
 Gap Leader: {self.state.gap_leader:.3f}
-
 """)
-       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-    

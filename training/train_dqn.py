@@ -9,7 +9,6 @@ from agents.dqn.action_mask import get_action_mask
 
 
 def set_global_seed(seed: int) -> None:
-
     np.random.seed(seed)
     torch.manual_seed(seed)
 
@@ -22,8 +21,6 @@ def train_dqn(
     seed: int = 42,
     checkpoint_dir: str = "checkpoints/dqn/checkpoints_v1",
 ):
-
-
     set_global_seed(seed)
 
     env = F1StrategyEnv()
@@ -31,28 +28,21 @@ def train_dqn(
     config = DQNConfig(
         obs_dim=15,
         action_dim=6,
-
         gamma=0.99,
         lr=1e-4,
-
         batch_size=128,
         replay_capacity=100_000,
         learning_starts=2_000,
         train_every=1,
-
         tau=0.005,
         gradient_clip=10.0,
-
         epsilon_start=1.0,
         epsilon_final=0.05,
         epsilon_decay_steps=80_000,
-
         reward_scale=0.01,
-
         per_alpha=0.6,
         per_beta_start=0.4,
         per_beta_frames=100_000,
-
         seed=seed,
     )
 
@@ -77,11 +67,11 @@ def train_dqn(
 
         while not done:
             agent_mask = get_action_mask(env)
-            action = agent.select_action(obs, evaluation=False, action_mask = agent_mask,)
+            action = agent.select_action(obs, evaluation=False, action_mask=agent_mask)
 
             next_obs, reward, terminated, truncated, info = env.step(action)
-
             done = terminated or truncated
+            next_mask = get_action_mask(env)
 
             if action != 0:
                 pit_count += 1
@@ -92,12 +82,12 @@ def train_dqn(
                 reward=reward,
                 next_obs=next_obs,
                 done=done,
+                next_action_mask=next_mask,
             )
 
             agent.total_steps += 1
 
             metrics = agent.train_step()
-
             if metrics is not None:
                 episode_loss_values.append(metrics["loss"])
 
@@ -113,7 +103,6 @@ def train_dqn(
         mean_return_50 = float(np.mean(recent_returns))
         mean_position_50 = float(np.mean(recent_positions))
         mean_pits_50 = float(np.mean(recent_pits))
-
         mean_loss = float(np.mean(episode_loss_values)) if episode_loss_values else 0.0
 
         print(
@@ -144,7 +133,6 @@ def train_dqn(
 
     final_path = checkpoint_dir / "final.pt"
     agent.save(str(final_path))
-
     print(f"Training complete. Final model saved to: {final_path}")
 
 
