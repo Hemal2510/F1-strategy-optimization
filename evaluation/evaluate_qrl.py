@@ -7,7 +7,7 @@ from agents.dqn.action_mask import get_action_mask
 
 
 def evaluate_checkpoint(
-    checkpoint_path: str = "checkpoints/qrl/checkpoints_qrl_v5/final.pt",
+    checkpoint_path: str = "checkpoints/qrl/checkpoints_qrl_v6/latest.pt",
     episodes: int = 20,
     seed: int = 10_000,
 ):
@@ -76,7 +76,7 @@ def evaluate_checkpoint(
 
 if __name__ == "__main__":
     evaluate_checkpoint(
-        checkpoint_path="checkpoints/qrl/checkpoints_qrl_v5/final.pt",
+        checkpoint_path="checkpoints/qrl/checkpoints_qrl_v6/latest.pt",
         episodes=20,
         seed=10_000,
     )

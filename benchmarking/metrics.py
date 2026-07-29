@@ -16,24 +16,16 @@ DEFAULT_METRICS = [
     "total_reward",
     "final_position",
     "position_gain",
-    "total_race_time",
-    "mean_lap_time",
-    "mean_lap_delta",
     "pit_count",
+    "mean_lap_time",
     "invalid_action_rate",
-    "mean_inference_ms",
-    "p95_inference_ms",
 ]
 
 
 LOWER_IS_BETTER = {
     "final_position",
-    "total_race_time",
     "mean_lap_time",
-    "mean_lap_delta",
     "invalid_action_rate",
-    "mean_inference_ms",
-    "p95_inference_ms",
 }
 
 

@@ -6,15 +6,9 @@ from agents.dqn.action_mask import get_action_mask
 
 
 def evaluate_checkpoint(
-<<<<<<< HEAD
-        checkpoint_path: str = "checkpoints/dqn/checkpoints_v2/final.pt",
-        episodes: int = 20,
-        seed: int = 10000,
-=======
-    checkpoint_path: str = "checkpoints/dqn/checkpoints_v1/final.pt",
+    checkpoint_path: str = "checkpoints/dqn/checkpoints_v2/best.pt",
     episodes: int = 20,
     seed: int = 10000,
->>>>>>> 6a1491c4ef767fa165a95a6431394334a07f3b12
 ):
     env = F1StrategyEnv()
 
@@ -82,13 +76,7 @@ def evaluate_checkpoint(
 
 if __name__ == "__main__":
     evaluate_checkpoint(
-<<<<<<< HEAD
-        checkpoint_path="checkpoints/dqn/checkpoints_v2/final.pt",
-        episodes = 20,
-        seed = 10_000,
-=======
-        checkpoint_path="checkpoints/dqn/checkpoints_v1/final.pt",
+        checkpoint_path="checkpoints/dqn/checkpoints_v2/best.pt",
         episodes=20,
         seed=10_000,
->>>>>>> 6a1491c4ef767fa165a95a6431394334a07f3b12
     )
