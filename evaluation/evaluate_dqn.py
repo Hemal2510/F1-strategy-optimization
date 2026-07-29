@@ -5,7 +5,7 @@ from agents.dqn.dqn_agent import DQNAgent, DQNConfig
 from agents.dqn.action_mask import get_action_mask
 
 def evaluate_checkpoint(
-        checkpoint_path: str = "checkpoints/dqn/checkpoints_v1/final.pt",
+        checkpoint_path: str = "checkpoints/dqn/checkpoints_v2/final.pt",
         episodes: int = 20,
         seed: int = 10000,
 ):
@@ -19,6 +19,7 @@ def evaluate_checkpoint(
     returns = []
     final_positions = []
     pit_counts = []
+    
 
     action_names ={
         0: "stay out",
@@ -77,7 +78,7 @@ def evaluate_checkpoint(
 
 if __name__ == "__main__":
     evaluate_checkpoint(
-        checkpoint_path="checkpoints/dqn/checkpoints_v1/final.pt",
+        checkpoint_path="checkpoints/dqn/checkpoints_v2/final.pt",
         episodes = 20,
         seed = 10_000,
     )
