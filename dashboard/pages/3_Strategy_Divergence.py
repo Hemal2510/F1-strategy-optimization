@@ -91,9 +91,25 @@ st.divider()
 st.subheader("Action Distribution: DQN vs QRL")
 
 if "action_name_a" in heat_df.columns and "action_name_b" in heat_df.columns:
-    counts_a = heat_df["action_name_a"].value_counts(normalize=True).rename("dqn")
-    counts_b = heat_df["action_name_b"].value_counts(normalize=True).rename("qrl")
-    action_dist = pd.concat([counts_a, counts_b], axis=1).fillna(0).reset_index()
+    ALL_ACTIONS = ["stay_out", "pit_soft", "pit_medium", "pit_hard", "pit_intermediate", "pit_wet"]
+    ACTION_MAP = {
+        0: "stay_out", "0": "stay_out",
+        1: "pit_soft", "1": "pit_soft",
+        2: "pit_medium", "2": "pit_medium",
+        3: "pit_hard", "3": "pit_hard",
+        4: "pit_intermediate", "4": "pit_intermediate",
+        5: "pit_wet", "5": "pit_wet",
+        "action_0": "stay_out", "action_1": "pit_soft", "action_2": "pit_medium",
+        "action_3": "pit_hard", "action_4": "pit_intermediate", "action_5": "pit_wet",
+    }
+
+    series_a = heat_df["action_name_a"].map(lambda x: ACTION_MAP.get(x, str(x)))
+    series_b = heat_df["action_name_b"].map(lambda x: ACTION_MAP.get(x, str(x)))
+
+    counts_a = series_a.value_counts(normalize=True).reindex(ALL_ACTIONS, fill_value=0.0).rename("dqn")
+    counts_b = series_b.value_counts(normalize=True).reindex(ALL_ACTIONS, fill_value=0.0).rename("qrl")
+
+    action_dist = pd.concat([counts_a, counts_b], axis=1).reset_index()
     action_dist = action_dist.rename(columns={"index": "action"})
     action_dist_long = action_dist.melt(id_vars="action", var_name="agent", value_name="share")
 
