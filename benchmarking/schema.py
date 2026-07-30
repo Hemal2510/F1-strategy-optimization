@@ -29,8 +29,6 @@ EPISODE_COLUMNS = [
     "mean_lap_time",
     "mean_lap_delta",
     "pit_count",
-    "invalid_action_count",
-    "invalid_action_rate",
     "mean_inference_ms",
     "median_inference_ms",
     "p95_inference_ms",

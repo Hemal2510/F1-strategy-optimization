@@ -1,33 +1,13 @@
 from __future__ import annotations
 
-import importlib
-import inspect
 import json
 import random
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 import numpy as np
 import torch
-
-
-def import_object(path: str) -> Any:
-    """Import ``package.module:object`` or ``package.module.object``."""
-    if ":" in path:
-        module_name, object_name = path.split(":", 1)
-    else:
-        module_name, object_name = path.rsplit(".", 1)
-    module = importlib.import_module(module_name)
-    return getattr(module, object_name)
-
-
-def call_with_supported_kwargs(callable_obj: Callable[..., Any], kwargs: Mapping[str, Any]) -> Any:
-    signature = inspect.signature(callable_obj)
-    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()):
-        return callable_obj(**dict(kwargs))
-    supported = {k: v for k, v in kwargs.items() if k in signature.parameters}
-    return callable_obj(**supported)
 
 
 def set_global_seed(seed: int) -> None:

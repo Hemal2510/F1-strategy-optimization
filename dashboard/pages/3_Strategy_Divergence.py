@@ -33,9 +33,7 @@ if disagree_df.empty:
 if "lap_index" not in disagree_df.columns:
     disagree_df["lap_index"] = disagree_df.index
 
-# ---------------------------------------------------------------------------
-# Track filter
-# ---------------------------------------------------------------------------
+# Track filter dropdown
 track_options = sorted(disagree_df["track"].dropna().unique()) if "track" in disagree_df.columns else []
 if track_options:
     track_choice = st.selectbox("Filter by Track", options=["All"] + list(track_options))
@@ -43,9 +41,7 @@ if track_options:
 else:
     heat_df = disagree_df
 
-# ---------------------------------------------------------------------------
-# Heatmap: seed × lap
-# ---------------------------------------------------------------------------
+# Heatmap comparing disagreement across seeds and laps
 st.subheader("Disagreement Heatmap (Seed × Lap)")
 
 if "seed" in heat_df.columns and "actions_disagree" in heat_df.columns:
@@ -69,9 +65,7 @@ if "seed" in heat_df.columns and "actions_disagree" in heat_df.columns:
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-# Disagreement rate per lap
-# ---------------------------------------------------------------------------
+# Disagreement rate plot per lap
 st.subheader("Disagreement Rate per Lap")
 
 rate_by_lap = heat_df.groupby("lap_index")["actions_disagree"].mean().reset_index()
@@ -85,9 +79,7 @@ st.plotly_chart(fig_rate, width="stretch")
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-# Action distribution
-# ---------------------------------------------------------------------------
+# Action distribution comparison
 st.subheader("Action Distribution: DQN vs QRL")
 
 if "action_name_a" in heat_df.columns and "action_name_b" in heat_df.columns:
@@ -122,9 +114,7 @@ if "action_name_a" in heat_df.columns and "action_name_b" in heat_df.columns:
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-# Reward impact of disagreement
-# ---------------------------------------------------------------------------
+# Boxplot showing reward impact when agents disagree
 st.subheader("Reward Impact of Disagreement")
 
 if "reward_b_minus_a" in heat_df.columns and "actions_disagree" in heat_df.columns:

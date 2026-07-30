@@ -35,9 +35,7 @@ for col in ("position_after", "position_before", "track_wetness", "tyre_age_afte
     if col in lap_df.columns:
         lap_df[col] = pd.to_numeric(lap_df[col], errors="coerce")
 
-# ---------------------------------------------------------------------------
-# Race selector
-# ---------------------------------------------------------------------------
+# Select which race to display
 key_cols = [c for c in ("seed", "track", "year", "race_name") if c in lap_df.columns]
 race_keys = lap_df[key_cols].drop_duplicates().sort_values([c for c in ("track", "year", "seed") if c in key_cols]).reset_index(drop=True)
 
@@ -60,9 +58,7 @@ race_df = lap_df[mask].copy()
 agents_in_race = sorted(race_df["agent"].unique()) if "agent" in race_df.columns else []
 st.caption(f"Agents: **{', '.join(agent_label(a) for a in agents_in_race)}**")
 
-# ---------------------------------------------------------------------------
-# Position over laps
-# ---------------------------------------------------------------------------
+# Position curve plot over race laps
 st.subheader("Race Position over Laps")
 
 position_available = "position_after" in race_df.columns and race_df["position_after"].notna().any()
@@ -90,9 +86,7 @@ if position_available:
 else:
     st.info("Position data not available for this race.")
 
-# ---------------------------------------------------------------------------
-# Cumulative reward
-# ---------------------------------------------------------------------------
+# Plot cumulative rewards
 st.subheader("Cumulative Reward over Laps")
 
 if "cumulative_reward" in race_df.columns:
@@ -109,9 +103,7 @@ if "cumulative_reward" in race_df.columns:
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-# Lap scrubber
-# ---------------------------------------------------------------------------
+# Lap slider component for step-by-step breakdown
 st.subheader("Scrub Through the Race")
 
 max_lap = int(race_df["lap_index"].max()) if not race_df.empty else 0

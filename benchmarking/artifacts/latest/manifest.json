@@ -1,26 +1,18 @@
 {
-  "experiment_id": "benchmark-20260729-202021-c9fc50",
+  "experiment_id": "benchmark-20260730-211116-3049d3",
   "tracks": [
-    "Monaco",
     "Monza",
     "Silverstone"
   ],
   "years": [
-    2022,
-    2023,
-    2024
+    2025
   ],
   "seeds": [
     1001,
     1002,
     1003,
     1004,
-    1005,
-    1006,
-    1007,
-    1008,
-    1009,
-    1010
+    1005
   ],
   "agents": [
     "dqn",
@@ -30,7 +22,7 @@
     "rule_aware_heuristic",
     "real_driver"
   ],
-  "episode_count": 540,
-  "lap_row_count": 31440,
+  "episode_count": 60,
+  "lap_row_count": 3090,
   "error_count": 0
 }

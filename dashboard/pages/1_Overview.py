@@ -23,9 +23,7 @@ if overall_df is None or overall_df.empty:
     st.warning("No aggregated metrics available. Re-run the benchmark.")
     st.stop()
 
-# ---------------------------------------------------------------------------
-# Metric bar charts with 95% CI
-# ---------------------------------------------------------------------------
+# Bar charts with 95% confidence interval
 st.subheader("Mean Metrics with 95% Confidence Interval")
 
 metric_options = [m for m in METRIC_LABELS if m in overall_df["metric"].unique()]
@@ -55,18 +53,14 @@ for metric in chosen_metrics:
         textposition="outside",
     ))
     fig.update_layout(
-        title=f"{METRIC_LABELS.get(metric, metric)} ({'lower is better' if lower_better else 'higher is better'})",
+        title=METRIC_LABELS.get(metric, metric),
         yaxis_title=METRIC_LABELS.get(metric, metric),
         showlegend=False,
         height=380,
     )
     st.plotly_chart(fig, width="stretch")
 
-st.divider()
-
-# ---------------------------------------------------------------------------
-# Per-track breakdown
-# ---------------------------------------------------------------------------
+# Track by track metrics breakdown
 if track_df is not None and not track_df.empty:
     st.subheader("Per-Track Breakdown")
     track_metric = st.selectbox(

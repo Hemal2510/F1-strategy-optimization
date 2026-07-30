@@ -1,25 +1,20 @@
 from __future__ import annotations
 
-import platform
 import time
 import uuid
 from typing import Any
 
 import numpy as np
 import pandas as pd
-import torch
 
 from agents.dqn.action_mask import get_action_mask
 from env.f1_env import F1StrategyEnv
 
-from .adapters import build_adapters
 from .schema import DEFAULT_ACTION_NAMES, EPISODE_COLUMNS, lap_columns
 from .utils import (
-    ensure_dir,
     first_present,
     observation_to_json,
     set_global_seed,
-    write_json,
 )
 
 
@@ -168,7 +163,6 @@ def run_episode(
     cumulative_reward = 0.0
     inference_times: list[float] = []
     pit_count = 0
-    invalid_action_count = 0
     lap_index = 0
     done = False
 
@@ -205,9 +199,6 @@ def run_episode(
             0 <= action < len(action_mask)
             and bool(action_mask[action])
         )
-
-        if not action_valid:
-            invalid_action_count += 1
 
         if action != 0:
             pit_count += 1
@@ -363,10 +354,6 @@ def run_episode(
             else np.nan
         ),
         "pit_count": pit_count,
-        "invalid_action_count": invalid_action_count,
-        "invalid_action_rate": (
-            invalid_action_count / max(1, len(lap_rows))
-        ),
         "mean_inference_ms": float(
             inference_array.mean()
         ),
@@ -388,122 +375,3 @@ def run_episode(
         pass
 
     return summary, lap_rows
-
-
-def evaluate(config: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Evaluate all enabled agents on all configured seeds."""
-    output_dir = ensure_dir(
-        config["output_dir"]
-    )
-
-    adapters = build_adapters(config)
-
-    experiment_id = (
-        config["project_name"]
-        + "-"
-        + time.strftime("%Y%m%d-%H%M%S")
-    )
-
-    action_names = config["benchmark"].get(
-        "action_names",
-        DEFAULT_ACTION_NAMES,
-    )
-
-    episode_summaries: list[dict] = []
-    lap_traces: list[dict] = []
-    errors: list[dict] = []
-
-    for seed in config["seeds"]:
-        for adapter in adapters:
-            print(
-                f"Evaluating {adapter.name} on seed {seed}..."
-            )
-
-            try:
-                summary, rows = run_episode(
-                    experiment_id=experiment_id,
-                    adapter=adapter,
-                    seed=int(seed),
-                    environment_kwargs=config[
-                        "environment"
-                    ].get("kwargs", {}),
-                    reset_options=config[
-                        "environment"
-                    ].get("reset_options", {}),
-                    action_names=action_names,
-                    save_observations=config[
-                        "benchmark"
-                    ].get(
-                        "save_observation_vectors",
-                        True,
-                    ),
-                )
-
-                episode_summaries.append(summary)
-                lap_traces.extend(rows)
-
-            except Exception as error:
-                errors.append(
-                    {
-                        "agent": adapter.name,
-                        "seed": seed,
-                        "error": repr(error),
-                    }
-                )
-
-                print(
-                    f"Failed: {adapter.name}, "
-                    f"seed {seed}: {error!r}"
-                )
-
-    episode_df = pd.DataFrame(
-        episode_summaries
-    ).reindex(columns=EPISODE_COLUMNS)
-
-    action_dim = len(action_names)
-
-    lap_df = pd.DataFrame(
-        lap_traces
-    ).reindex(
-        columns=lap_columns(action_dim)
-    )
-
-    episode_df.to_csv(
-        output_dir / "episode_summary.csv",
-        index=False,
-    )
-
-    lap_df.to_csv(
-        output_dir / "lap_trace.csv",
-        index=False,
-    )
-
-    pd.DataFrame(errors).to_csv(
-        output_dir / "errors.csv",
-        index=False,
-    )
-
-    manifest = {
-        "experiment_id": experiment_id,
-        "project_name": config["project_name"],
-        "config_path": config["_config_path"],
-        "device": config["device"],
-        "seeds": config["seeds"],
-        "agents": [
-            adapter.name
-            for adapter in adapters
-        ],
-        "episode_count": len(episode_df),
-        "lap_row_count": len(lap_df),
-        "python_platform": platform.platform(),
-        "torch_version": torch.__version__,
-        "numpy_version": np.__version__,
-        "errors": errors,
-    }
-
-    write_json(
-        output_dir / "manifest.json",
-        manifest,
-    )
-
-    return episode_df, lap_df

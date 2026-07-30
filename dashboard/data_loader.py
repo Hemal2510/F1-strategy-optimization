@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -31,7 +31,6 @@ METRIC_LABELS = {
     "position_gain":      "Positions Gained",
     "pit_count":          "Pit Stops",
     "mean_lap_time":      "Mean Lap Time (s)",
-    "invalid_action_rate":"Invalid Action Rate",
 }
 
 

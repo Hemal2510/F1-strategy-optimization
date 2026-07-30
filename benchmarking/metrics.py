@@ -18,14 +18,12 @@ DEFAULT_METRICS = [
     "position_gain",
     "pit_count",
     "mean_lap_time",
-    "invalid_action_rate",
 ]
 
 
 LOWER_IS_BETTER = {
     "final_position",
     "mean_lap_time",
-    "invalid_action_rate",
 }
 
 
@@ -80,6 +78,8 @@ def aggregate_metrics(
         )
 
         for metric in DEFAULT_METRICS:
+            if metric not in group_data.columns:
+                continue
             values = pd.to_numeric(
                 group_data[metric],
                 errors="coerce",
@@ -162,6 +162,8 @@ def paired_comparison(
     rows: list[dict] = []
 
     for metric in DEFAULT_METRICS:
+        if f"{metric}_a" not in paired.columns or f"{metric}_b" not in paired.columns:
+            continue
         values_a = pd.to_numeric(
             paired[f"{metric}_a"],
             errors="coerce",

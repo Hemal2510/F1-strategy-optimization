@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# Make project root importable so benchmarking package resolves correctly
+# Allow importing benchmarking modules from root
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from data_loader import AGENT_COLORS, AGENT_DISPLAY_NAMES, METRIC_LABELS, agent_color, agent_label
@@ -18,10 +18,8 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------------------------------------------------------------------------
-# Sidebar — Benchmark Controls
-# ---------------------------------------------------------------------------
-st.sidebar.title("🏎️ Benchmark Controls")
+# Sidebar filters & controls
+st.sidebar.title("Benchmark Controls")
 
 selected_tracks = st.sidebar.multiselect(
     "Tracks",
@@ -55,9 +53,7 @@ st.sidebar.divider()
 run_clicked = st.sidebar.button("▶ Run Benchmark", type="primary", width="stretch")
 load_clicked = st.sidebar.button("📂 Load Latest Results", width="stretch")
 
-# ---------------------------------------------------------------------------
-# Load Latest Results from benchmarking/artifacts/latest/
-# ---------------------------------------------------------------------------
+# Load saved benchmark results if available
 if load_clicked:
     _latest = Path(__file__).resolve().parent.parent / "benchmarking" / "artifacts" / "latest"
     if not _latest.exists() or not (_latest / "manifest.json").exists():
@@ -100,11 +96,9 @@ if load_clicked:
         }
         st.sidebar.success(f"✅ Loaded {_manifest.get('episode_count', len(_episode_df))} episodes from latest run.")
 
-# ---------------------------------------------------------------------------
-# Main area — Home page
-# ---------------------------------------------------------------------------
-st.title("🏎️ F1 Pit-Stop Strategy — Agent Benchmark")
-st.caption("SoC 2026 · Quantum Reinforcement Learning for pit strategy optimisation")
+# Dashboard title and main page layout
+st.title("F1 Pit-Stop Strategy — Agent Benchmark")
+st.caption("SoC 2026 · Quantum Reinforcement Learning for pit strategy optimisation . QC-3")
 
 # Validation and run
 if run_clicked:
@@ -171,7 +165,7 @@ overall_df: pd.DataFrame = results.get("overall", pd.DataFrame())
 # KPI tiles
 if manifest:
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Agents run", ", ".join(manifest.get("agents", [])))
+    c1.metric("Agents run", len(manifest.get("agents", [])))
     c2.metric("Seeds", manifest.get("seeds", []) and len(manifest["seeds"]))
     c3.metric("Episodes", manifest.get("episode_count", len(episode_df)))
     c4.metric("Errors", manifest.get("error_count", 0))
