@@ -1,164 +1,67 @@
 # Quantum RL Agent for F1 Race Strategy Optimization
 
-This project focuses on building an intelligent race strategy optimization system for Formula 1 using Reinforcement Learning. The current implementation includes a structured data layer, a custom F1 simulation environment, and a Deep Q-Network based agent for learning pit-stop and race strategy decisions.
-
-The long-term objective of this project is to compare classical reinforcement learning methods with quantum reinforcement learning approaches for F1 race strategy optimization.
-
----
-
-## Project Overview 
-
-Formula 1 race strategy involves making sequential decisions across multiple laps. Important decisions include when to pit, which tyre compound to choose, how tyre degradation affects pace, how traffic impacts lap times, and how safety car situations can influence strategy.
-
-This project converts F1 race data into a simulation-ready format and trains an RL agent to make strategy decisions in a custom race environment.
-
-The project is currently divided into the following major parts:
-
-1. Environment
-2. DQN Agent
-3. Training Pipeline
-4. Evaluation Pipeline
-5. Checkpoint Management
-6. Reports and Documentation
+## Overview
+This project optimizes Formula 1 race strategies—such as pit stop timing, tyre compound selection, and pace management—using Reinforcement Learning. It compares a classical **Deep Q-Network (DQN)** agent against a **Hybrid Quantum Reinforcement Learning (QRL)** agent within a custom, data-driven F1 simulation environment built on real FastF1 telemetry and timing data.
 
 ---
 
-## Current Work Completed
-
-The following work has been completed so far:
-
-### 1. Environment
-
-The environment represents the Formula 1 race simulation system.
-
-It includes:
-
-- A custom F1 environment
-- Real life historical race data to simulate the environment
-- Race backend logic
-- Race session management
-- Race state representation
-- Reward calculation
-- Pit stop modeling
-- Tyre degradation modeling
-- Traffic modeling
-
-This layer is responsible for simulating how a race progresses based on real life historical race data, lap by lap and how the agent's decisions affect the final race outcome.
+## Tech Stack
+- **Quantum Computing**: [PennyLane](https://pennylane.ai/) (Variational Quantum Circuits with `qml.qnn.TorchLayer`)
+- **Deep Reinforcement Learning**: [PyTorch](https://pytorch.org/) (Double DQN, Dueling Architecture, Prioritized Experience Replay, Action Masking)
+- **Environment & Data Engine**: Python 3.10+, [Gymnasium](https://gymnasium.farama.org/), [FastF1](https://fastf1.dev/), Pandas, NumPy
+- **Dashboard & Visualization**: [Streamlit](https://streamlit.io/), Plotly, Matplotlib
 
 ---
 
-### 2. DQN Agent
+## How to Run the Dashboard
 
-The DQN agent contains the reinforcement learning logic.
+The interactive Streamlit dashboard lets you visually analyze benchmark results, compare agents, and inspect step-by-step race replays.
 
-It includes:
+To launch the dashboard:
+```bash
+streamlit run dashboard/Home.py
+```
 
-- DQN agent implementation
-- Neural network model
-- Replay buffer
-- Action masking logic
-
-The DQN agent learns from interaction with the F1 environment. It stores experiences, trains a neural network, selects actions, and improves strategy over time.
-
----
-
-### 3. Training Pipeline
-
-The training pipeline contains the main training script for the DQN agent.
-
-The training script connects:
-
-- The F1 environment
-- The DQN agent
-- The replay buffer
-- The neural network
-- The checkpoint saving system
-
-The goal of training is to allow the agent to learn better race strategies over many simulated episodes.
+### Dashboard Pages:
+1. **Overview Page (`1_Overview.py`)**: Visualizes aggregate performance metrics (Total Reward, Final Position, Position Gain, Pit Count, Lap Time) with 95% confidence intervals, overall win-rate breakdowns, and paired statistical agent comparisons.
+2. **Lap Replay Page (`2_Lap_Replay.py`)**: Interactively steps through race episodes lap-by-lap to inspect driver position, gap to leader, tyre age, and pit stop calls.
+3. **Strategy Divergence Page (`3_Strategy_Divergence.py`)**: Highlights specific laps where the QRL agent and DQN agent made differing strategic decisions.
 
 ---
 
-### 4. Evaluation Pipeline
+## How to Run Evaluation & Benchmarking
 
-The evaluation folder contains scripts for testing trained DQN models and comparing them with baseline strategies.
+You can evaluate trained models against baseline policies (Random, Always Stay Out, Rule-Aware Heuristic, and Real Driver Strategy):
 
-It includes:
+### 1. Run Benchmark Pipeline
+To execute automated evaluations across tracks and generate CSV artifacts:
+```bash
+python -c "from benchmarking.runner import run_benchmark; run_benchmark()"
+```
+*Artifacts will be saved under `benchmarking/artifacts/latest/` (`overall_metrics.csv`, `track_metrics.csv`, `paired_comparison.csv`, `lap_trace.csv`).*
 
-- Evaluation of trained DQN models
-- Evaluation of baseline DQN or rule-based approaches
-
-This helps measure whether the trained agent is actually learning useful race strategies.
-
+### 2. Run Evaluation Scripts
+- **Evaluate All Agents**:
+  ```bash
+  python evaluation/evaluate_all.py
+  ```
+- **Evaluate DQN Agent**:
+  ```bash
+  python evaluation/evaluate_dqn.py
+  ```
+- **Evaluate QRL Agent**:
+  ```bash
+  python evaluation/evaluate_qrl.py
+  ```
+- **Evaluate on 2025 Season (Not used in training)**:
+  ```bash
+  python evaluation/evaluate_tracks_2025.py
+  ```
 ---
 
-### 5. Checkpoint System
+## Reports & Documentation
 
-The project stores trained DQN model checkpoints in the `checkpoints/` directory.
+For comprehensive details on mathematical formulations, environment mechanics, quantum circuit architecture experiments (v6–v12), and detailed result analysis, please consult the report files in the [`reports/`](reports/) directory:
 
-The current checkpoint structure contains:
-
-- `best.pt` — the best performing model checkpoint
-- `latest.pt` — the latest saved model checkpoint
-- `final.pt` — the final model after training completion
-
-This allows training to be resumed, evaluated, and compared without retraining from the beginning.
-
----
-
-### 6. Reports
-
-The `reports/` folder currently contains the mid-evaluation report:
-
-- `mid_eval_report_qc_3.pdf`
-
-This report documents the progress made so far in the project.
-
----
-
-## Repository Structure (Current)
-
-```text
-project-root/
-│
-├── agents/
-│   └── dqn/
-│       ├── action_mask.py
-│       ├── dqn_agent.py
-│       ├── network.py
-│       └── replay_buffer.py
-│
-├── checkpoints/
-│   └── dqn/
-│       └── checkpoints_v1/
-│           ├── best.pt
-│           ├── final.pt
-│           └── latest.pt
-│
-├── env/
-│   ├── data/
-│   │   ├── my_cache/
-│   │   ├── processed_cache/
-│   │   ├── data_for_env.py
-│   │   └── my_data.py
-│   ├── f1_env.py
-│   ├── pit_model.py
-│   ├── race_backend.py
-│   ├── race_session.py
-│   ├── race_state.py
-│   ├── reward.py
-│   ├── traffic_model.py
-│   └── tyre_model.py
-│
-├── evaluation/
-│   ├── __init__.py
-│   ├── evaluate_baselines_dqn.py
-│   └── evaluate_dqn.py
-│
-├── reports/
-│   └── mid_eval_report_qc_3.pdf
-│
-├── training/
-│   └── train_dqn.py
-│
-├── .gitignore
-└── README.md
+- **End Evaluation Report**: [`reports/end_eval_report.docx`](reports/end_eval_report.docx) (or [`reports/end_eval_report_updated.docx`](reports/end_eval_report_updated.docx))
+- **Mid Evaluation Report**: [`reports/mid_eval_report_qc_3.pdf`](reports/mid_eval_report_qc_3.pdf)
