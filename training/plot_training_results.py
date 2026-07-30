@@ -228,13 +228,13 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--dqn",
         type=Path,
-        default=Path("checkpoints/dqn/checkpoints_v1/training_metrics.csv"),
+        default=Path("checkpoints_1/dqn/checkpoints_v1/training_metrics.csv"),
         help="Path to the DQN training_metrics.csv file.",
     )
     parser.add_argument(
         "--qrl",
         type=Path,
-        default=Path("checkpoints/qrl/checkpoints_qrl_v6/training_metrics.csv"),
+        default=Path("checkpoints_1/qrl/checkpoints_qrl_v6/training_metrics.csv"),
         help="Path to the QRL training_metrics.csv file.",
     )
     parser.add_argument(
