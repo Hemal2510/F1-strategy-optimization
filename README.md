@@ -63,5 +63,5 @@ python -c "from benchmarking.runner import run_benchmark; run_benchmark()"
 
 For comprehensive details on mathematical formulations, environment mechanics, quantum circuit architecture experiments (v6–v12), and detailed result analysis, please consult the report files in the [`reports/`](reports/) directory:
 
-- **End Evaluation Report**: [`reports/end_eval_report.docx`](reports/end_eval_report.docx) (or [`reports/end_eval_report_updated.docx`](reports/end_eval_report_updated.docx))
+- **End Evaluation Report**: [`reports/end_eval_report_qc_3.pdf`](reports/end_eval_report_qc_3.pdf)
 - **Mid Evaluation Report**: [`reports/mid_eval_report_qc_3.pdf`](reports/mid_eval_report_qc_3.pdf)
