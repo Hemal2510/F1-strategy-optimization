@@ -1,0 +1,28 @@
+{
+  "experiment_id": "benchmark-20260730-211116-3049d3",
+  "tracks": [
+    "Monza",
+    "Silverstone"
+  ],
+  "years": [
+    2025
+  ],
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005
+  ],
+  "agents": [
+    "dqn",
+    "qrl",
+    "random",
+    "always_stay_out",
+    "rule_aware_heuristic",
+    "real_driver"
+  ],
+  "episode_count": 60,
+  "lap_row_count": 3090,
+  "error_count": 0
+}
