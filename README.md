@@ -1,7 +1,8 @@
 # Quantum RL Agent for F1 Race Strategy Optimization
 
 ## Overview
-This project optimizes Formula 1 race strategies—such as pit stop timing, tyre compound selection, and pace management—using Reinforcement Learning. It compares a classical **Deep Q-Network (DQN)** agent against a **Hybrid Quantum Reinforcement Learning (QRL)** agent within a custom, data-driven F1 simulation environment built on real FastF1 telemetry and timing data.
+This project optimizes Formula 1 race strategies—such as pit stop timing, tyre compound selection, and pace management—using Reinforcement Learning. 
+It compares a classical **Deep Q-Network (DQN)** agent against a **Hybrid Quantum Reinforcement Learning (QRL)** agent within a custom, data-driven F1 simulation environment built on real FastF1 telemetry and timing data.
 
 ---
 
@@ -24,7 +25,9 @@ streamlit run dashboard/Home.py
 
 ### Dashboard Pages:
 1. **Overview Page (`1_Overview.py`)**: Visualizes aggregate performance metrics (Total Reward, Final Position, Position Gain, Pit Count, Lap Time) with 95% confidence intervals, overall win-rate breakdowns, and paired statistical agent comparisons.
+
 2. **Lap Replay Page (`2_Lap_Replay.py`)**: Interactively steps through race episodes lap-by-lap to inspect driver position, gap to leader, tyre age, and pit stop calls.
+
 3. **Strategy Divergence Page (`3_Strategy_Divergence.py`)**: Highlights specific laps where the QRL agent and DQN agent made differing strategic decisions.
 
 ---
