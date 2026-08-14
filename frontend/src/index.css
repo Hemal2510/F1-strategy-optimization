@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Custom F1 Dashboard Styles */
+@layer base {
+  body {
+    background-color: #0d0e12;
+    color: #f3f4f6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+/* Glassmorphism panels */
+.glass-panel {
+  background: rgba(18, 19, 26, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Neon accents */
+.neon-border-red {
+  border-color: rgba(230, 57, 70, 0.3);
+  box-shadow: 0 0 10px rgba(230, 57, 70, 0.15);
+}
+
+.neon-border-blue {
+  border-color: rgba(29, 127, 212, 0.3);
+  box-shadow: 0 0 10px rgba(29, 127, 212, 0.15);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1015;
+}
+::-webkit-scrollbar-thumb {
+  background: #272935;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3e4153;
+}
