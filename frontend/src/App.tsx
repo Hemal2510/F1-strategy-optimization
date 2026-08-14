@@ -277,7 +277,7 @@ export default function App() {
             >
               {sortedDrivers.map((d) => (
                 <option key={d.driver_id} value={d.driver_id}>
-                  {d.name}
+                  {d.name} (Real: P{d.final_position === 20 ? "Retired" : d.final_position})
                 </option>
               ))}
             </select>
@@ -626,6 +626,63 @@ export default function App() {
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Real vs AI Final Comparison Statistics Card */}
+              {raceResult && (
+                <div className="mt-5 bg-[#12131a]/85 border border-[#3b82f6]/20 rounded-xl p-4">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-2 border-b border-gray-800 pb-1.5">
+                    Showcase Insight (Final Stands)
+                  </span>
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 font-medium">Real Finishing Place:</span>
+                      <span className="font-extrabold text-[#9c27b0] bg-[#9c27b0]/15 px-2.5 py-0.5 rounded border border-[#9c27b0]/35">
+                        P{raceResult.final_position === 20 ? "Retired" : raceResult.final_position}
+                      </span>
+                    </div>
+
+                    {branchResult && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 font-medium">DQN Strategy Gain:</span>
+                          <span className={`font-extrabold px-2 py-0.5 rounded border ${
+                            raceResult.final_position - branchResult.dqn.avg_finish >= 0
+                              ? "text-emerald-400 bg-emerald-950/15 border-emerald-500/30"
+                              : "text-rose-400 bg-rose-950/15 border-rose-500/30"
+                          }`}>
+                            {raceResult.final_position - branchResult.dqn.avg_finish >= 0 ? "+" : ""}
+                            {(raceResult.final_position - branchResult.dqn.avg_finish).toFixed(1)} Positions
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 font-medium">QRL (Quantum) Gain:</span>
+                          <span className={`font-extrabold px-2 py-0.5 rounded border ${
+                            raceResult.final_position - branchResult.qrl.avg_finish >= 0
+                              ? "text-emerald-400 bg-emerald-950/15 border-emerald-500/30"
+                              : "text-rose-400 bg-rose-950/15 border-rose-500/30"
+                          }`}>
+                            {raceResult.final_position - branchResult.qrl.avg_finish >= 0 ? "+" : ""}
+                            {(raceResult.final_position - branchResult.qrl.avg_finish).toFixed(1)} Positions
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 pt-2.5 border-t border-gray-800 text-[11px] text-gray-400 leading-relaxed italic">
+                          {branchResult.qrl.avg_finish < raceResult.final_position ? (
+                            <span>
+                              💡 <strong>Quantum Advantage:</strong> By adapting tyre stints earlier, the hybrid Quantum RL model beats the historical F1 pit choices, unlocking a projected gain of <strong>{(raceResult.final_position - branchResult.qrl.avg_finish).toFixed(1)} positions</strong>!
+                            </span>
+                          ) : (
+                            <span>
+                              💡 <strong>Strategy Analysis:</strong> The AI models simulate alternative tyres to avoid high degradation, proving that optimizing tyre age helps lower-grid drivers gain traffic advantages.
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

@@ -42,9 +42,7 @@ class F1StrategyEnv(gym.Env):
             self.name = None  
 
         self.env_data = Env_data(self.track, self.year)
-        self.race_backend = RaceBackend(self.env_data.data)
-        self.race_session = RaceSession(self.env_data.data)
-
+        # Initialize race session and backend
         self.max_laps       = self.env_data.data["max_laps"]
         self.total_players  = self.env_data.data["total_drivers"]
         self.safety_car_times = self.env_data.data["safety_car"]
@@ -66,12 +64,31 @@ class F1StrategyEnv(gym.Env):
             idx = int(self.np_random.integers(0, len(eligible)))
             self.name = eligible[idx]
 
+        # Initialize race_session after driver self.name is set
+        self.race_backend = RaceBackend(self.env_data.data)
+        self.race_session = RaceSession(self.env_data.data)
+
+        # Set driver's starting total time based on starting grid index to preserve starting position
+        grid_stagger_time = 1e-5
+        starting_grid = self.env_data.data["starting_grid"]
+        try:
+            start_idx = starting_grid.index(self.name)
+        except ValueError:
+            start_idx = 10  # fallback mid-grid
+
+        for pos, name in enumerate(starting_grid):
+            # Reset all drivers times in the session to grid order
+            d_obj = next((d for d in self.race_session.drivers if d.name == name), None)
+            if d_obj:
+                d_obj.total_race_time = pos * grid_stagger_time
+                d_obj.current_position = pos + 1
+
         # Starting compound from race data
         starting_compounds  = self.env_data.data.get("starting_compounds", {})
         initial_tyre_compound = starting_compounds.get(self.name, 1)
         self.compounds_used = {initial_tyre_compound}
 
-        self.race_session.step(0, 0, self.name)
+        self.race_session.step(0, start_idx * grid_stagger_time, self.name)
         arranged_cars = self.race_session.get_agent_state(self.name)
         gap_ahead = arranged_cars['gap_ahead']
 

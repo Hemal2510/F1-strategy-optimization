@@ -18,6 +18,7 @@ from env.f1_env import F1StrategyEnv
 from agents.dqn.action_mask import get_action_mask
 from agents.real_agent import RealDriverPolicy
 from model_runner import LiveModelRunner
+from data.data import F1TrackDataLoader
 
 app = FastAPI(title="F1 Reinforcement Learning Strategy Showcase API")
 
@@ -78,36 +79,44 @@ def get_races():
                 race_data = pickle.load(f)
             
             # Find starting grid and check if we have their lap times
-            starting_grid = race_data.get("starting_grid", [])
-            lap_times = race_data.get("lap_times", {})
-            max_laps = race_data.get("max_laps", 70)
-            
             # We want to match real-world final positions if available
             # Let's inspect final standings from the last lap in race_data
-            final_lap_standings = lap_times.get(max_laps, {})
+            starting_grid = race_data.get("starting_grid", [])
+            max_laps = race_data.get("max_laps", 70)
             
+            # Retrieve real-world classified positions from fastf1
+            import fastf1
+            try:
+                session = fastf1.get_session(year, F1TrackDataLoader.TRACKS[track], "R")
+                session.load(laps=False)
+                # Map driver abbreviations to classified finishing position
+                classified_positions = {}
+                for r in session.results.itertuples():
+                    abbrev = r.Abbreviation
+                    pos_str = str(r.ClassifiedPosition).strip()
+                    if pos_str.isdigit():
+                        classified_positions[abbrev] = int(pos_str)
+                    elif pos_str == "R":
+                        # Retired, place at the bottom based on grid position order
+                        classified_positions[abbrev] = 20
+                    else:
+                        classified_positions[abbrev] = int(r.Position)
+            except Exception as e:
+                print(f"FastF1 error fetching results for {track} {year}: {e}")
+                classified_positions = {d: 20 for d in starting_grid}
+
             drivers_list = []
             for d in starting_grid:
-                # Find final position of the driver. We can estimate it by looking at the order of total race time
-                # Or fallback to an estimated order.
-                # Let's load the driver's real actions file if it exists, or estimate final position.
-                pos = 20  # default fallback
-                
-                # Check real driver summary if we have it
-                real_file = cache_dir / f"real_{track}_{year}_{d}.pkl"
-                if real_file.exists():
-                    # We have historical data for this driver
-                    pass
-                
-                # Let's calculate actual finishing position from lap 1 vs last lap in data
-                # We can calculate it based on total race time at the last lap
+                pos = classified_positions.get(d, 20)
                 drivers_list.append({
                     "driver_id": d,
                     "name": d,
-                    # We will dynamically get the actual final position or start position
-                    "final_position": 20 # will be refined in the frontend or during simulation
+                    "final_position": pos
                 })
             
+            # Sort drivers list by final_position descending (lower finishing positions first as requested)
+            drivers_list.sort(key=lambda x: x["final_position"], reverse=True)
+
             if year not in races_dict:
                 races_dict[year] = []
             
